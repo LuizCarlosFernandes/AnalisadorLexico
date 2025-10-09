@@ -2,9 +2,28 @@
 %{
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
+
+#include "Token.hpp"
 using namespace std;
 ifstream fin;
 int current_column = 1;
+
+unordered_map<string, string> mapIdentifier = {"event", "event"}, {"situation", "situation"}, {"process", "process"},
+{"category", "category"}, {"mixin", "mixin"}, {"phaseMixin", "phaseMixin"}, {"roleMixin", "roleMixin"}, {"historialRoleMixin", "historialRoleMixin"},
+{"kind", "kind"}, {"collective", "collective"}, {"quantity", "quantity"}, {"quality", "quality"}, {"mode", "mode"}, {"intrisicMode", "intrisicMode"},
+{"extrinsicMode", "extrinsicMode"}, {"subKind", "subKind"}, {"phase", "phase"}, {"role", "role"}, {"historicalRole", "historicalRole"},
+{"material", "material"}, {"derivation", "derivation"}, {"comparative", "comparative"}, {"mediation", "mediation"}, {"characterization", "characterization"},
+{"externalDependence", "externalDependence"}, {"componentOf", "componentOf"}, {"memberOf", "memberOf"}, {"subCollectionOf", "subCollectionOf"},
+{"subQualityOf", "subQualityOf"}, {"instantiation", "instantiation"}, {"termination", "termination"}, {"participational", "participational"},
+{"participation", "participation"}, {"historicalDependence", "historicalDependence"}, {"creation", "creation"}, {"manifestation", "manifestation"},
+{"bringsAbout", "bringsAbout"}, {"triggers", "triggers"}, {"composition", "composition"}, {"aggregation", "aggregation"},
+{"inherence", "inherence"}, {"value", "value"}, {"formal", "formal"}, {"constitution", "constitution"}, {"genset", "genset"},
+{"disjoint", "disjoint"}, {"complete", "complete"}, {"general", "general"}, {"specifics", "specifics"}, {"where", "where"},
+{"package", "package"}, {"number", "number"}, {"string", "string"}, {"boolean", "boolean"}, {"date", "date"}, {"time", "time"},
+{"datetime", "datetime"}, {"ordered", "ordered"}, {"const", "const"}, {"derived", "derived"}, {"subsets", "subsets"}, {"redefines", "redefines"}
+
+
 %}
 
 
@@ -18,6 +37,9 @@ Letters [a-zA-Z]
 Package {UpperCase}({Letters}*)+"Pkg"
 NewTypes {UpperCase}({Letters}*)+"DataType"
 
+Identifier{Letters}({Letters}*)
+
+
 ClassNames {UpperCase}({Letters}|{Underline})*
 RelationNames {LowerCase}({Letters}|{Underline})*
 InstanceNames {Letters}({Letters}|{Number}|{Underline})*
@@ -26,8 +48,10 @@ InstanceNames {Letters}({Letters}|{Number}|{Underline})*
 
 [ \t]+ current_column += yyleng;
 \n current_column = 1;
+
+{Identifier} cout << current_column; 
 {Underline} cout << current_column << " Underline\n"; current_column += yyleng;
-{Number} cout << current_column << " Number\n"; current_column += yyleng;
+{Number} cout << current_column << " Number " << yytext << "\n"; current_column += yyleng;
 {LowerCase} cout << current_column << " LowerCase\n"; current_column += yyleng;
 {UpperCase} cout << current_column << " UpperCase\n"; current_column += yyleng;
 {Package} cout << current_column << " Package\n"; current_column += yyleng;
@@ -37,6 +61,7 @@ InstanceNames {Letters}({Letters}|{Number}|{Underline})*
 {InstanceNames} cout << current_column << " InstanceNames\n"; current_column += yyleng;
 
 %%
+#include "Token.hpp"
 int main(int argc, char ** argv){
     yyFlexLexer lexer;
     lexer.switch_streams(&fin);  // altera entrada para arquivo

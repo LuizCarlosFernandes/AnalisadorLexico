@@ -1,0 +1,14 @@
+#ifndef TOKENS_HPP
+#define TOKENS_HPP
+enum Token{
+    T_PACKAGE,
+    T_DATATYPE,
+    T_CLASSNAMES,
+    T_RELATIONNAMES,
+    T_INSTANCENAMES,
+    T_NEWTYPES,
+    T_CLASSES,
+}
+
+
+#endif
