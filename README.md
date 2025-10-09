@@ -29,7 +29,7 @@ make
 
 ## ▶️ Como Executar
 
-Para rodar o analisador sobre um arquivo .tonto, use:
+Para rodar o analisador sobre um arquivo `.tonto`, use:
 
 ```bash
 ./lexer exemplos/car.tonto

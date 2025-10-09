@@ -4,12 +4,12 @@
 #include <fstream>
 #include <unordered_map>
 
-#include "Token.hpp"
+//#include "Token.hpp"
 using namespace std;
 ifstream fin;
 int current_column = 1;
 
-unordered_map<string, string> mapIdentifier = {"event", "event"}, {"situation", "situation"}, {"process", "process"},
+unordered_map<string, string> mapIdentifier = {{"event", "event"}, {"situation", "situation"}, {"process", "process"},
 {"category", "category"}, {"mixin", "mixin"}, {"phaseMixin", "phaseMixin"}, {"roleMixin", "roleMixin"}, {"historialRoleMixin", "historialRoleMixin"},
 {"kind", "kind"}, {"collective", "collective"}, {"quantity", "quantity"}, {"quality", "quality"}, {"mode", "mode"}, {"intrisicMode", "intrisicMode"},
 {"extrinsicMode", "extrinsicMode"}, {"subKind", "subKind"}, {"phase", "phase"}, {"role", "role"}, {"historicalRole", "historicalRole"},
@@ -22,10 +22,11 @@ unordered_map<string, string> mapIdentifier = {"event", "event"}, {"situation", 
 {"disjoint", "disjoint"}, {"complete", "complete"}, {"general", "general"}, {"specifics", "specifics"}, {"where", "where"},
 {"package", "package"}, {"number", "number"}, {"string", "string"}, {"boolean", "boolean"}, {"date", "date"}, {"time", "time"},
 {"datetime", "datetime"}, {"ordered", "ordered"}, {"const", "const"}, {"derived", "derived"}, {"subsets", "subsets"}, {"redefines", "redefines"}
-
+};
 
 %}
 
+%option yylineno
 
 Underline [_]
 Number [0-9]+
@@ -33,35 +34,43 @@ Number [0-9]+
 LowerCase [a-z]
 UpperCase [A-Z]
 Letters [a-zA-Z]
-
+SpecialSymbols [{}()\[\]|\.\.|<>--|--<>|\\*|@|:]
 Package {UpperCase}({Letters}*)+"Pkg"
 NewTypes {UpperCase}({Letters}*)+"DataType"
-
-Identifier{Letters}({Letters}*)
-
-
-ClassNames {UpperCase}({Letters}|{Underline})*
 RelationNames {LowerCase}({Letters}|{Underline})*
+ClassNames {UpperCase}({Letters}|{Underline})*
 InstanceNames {Letters}({Letters}|{Number}|{Underline})*
+Identifier {LowerCase}({Letters}*)
+
+
 
 %%
 
 [ \t]+ current_column += yyleng;
 \n current_column = 1;
 
-{Identifier} cout << current_column; 
+
 {Underline} cout << current_column << " Underline\n"; current_column += yyleng;
 {Number} cout << current_column << " Number " << yytext << "\n"; current_column += yyleng;
 {LowerCase} cout << current_column << " LowerCase\n"; current_column += yyleng;
 {UpperCase} cout << current_column << " UpperCase\n"; current_column += yyleng;
+{SpecialSymbols} cout << current_column << " SpecialSymbol " << yytext << "\n"; current_column += yyleng;
 {Package} cout << current_column << " Package\n"; current_column += yyleng;
 {NewTypes} cout << current_column << " NewTypes\n"; current_column += yyleng;
 {ClassNames} cout << current_column << " ClassNames\n"; current_column += yyleng;
 {RelationNames} cout << current_column << " RelationNames\n"; current_column += yyleng;
 {InstanceNames} cout << current_column << " InstanceNames\n"; current_column += yyleng;
+{Identifier} {
+    auto it = mapIdentifier.find(yytext);
+    if(it != mapIdentifier.end()){
+        cout << current_column << " ID " << it->second << "\n";
+    } else {
+        cout << "Erro na linha " << yylineno << " No token:" << yytext << "\n";
+    }
+}
 
 %%
-#include "Token.hpp"
+//#include "Token.hpp"
 int main(int argc, char ** argv){
     yyFlexLexer lexer;
     lexer.switch_streams(&fin);  // altera entrada para arquivo
