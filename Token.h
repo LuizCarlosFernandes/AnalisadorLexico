@@ -1,5 +1,5 @@
-#ifndef TOKENS_HPP
-#define TOKENS_HPP
+#ifndef TOKENS_H
+#define TOKENS_H
 enum Token{
     T_PACKAGE,
     T_DATATYPE,
@@ -8,7 +8,5 @@ enum Token{
     T_INSTANCENAMES,
     T_NEWTYPES,
     T_CLASSES,
-}
-
-
+};
 #endif
