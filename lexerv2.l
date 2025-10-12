@@ -9,7 +9,6 @@ using namespace std;
 ifstream fin;
 ofstream fout;
 
-
 int current_column = 1;
 
 unordered_map<string, string> mapIdentifier = {{"relator", "relator"}, {"event", "event"}, {"situation", "situation"}, {"process", "process"},
@@ -33,7 +32,6 @@ unordered_map<string, string> mapIdentifier = {{"relator", "relator"}, {"event",
 
 Underline [_]
 Number [0-9]+
-
 Letters [a-zA-Z]
 SpecialSymbols [{}()\[\]|\.\.|<>--|--<>|\\*|@|:]
 GenericName {Letters}({Letters}|{Number}|{Underline})*
@@ -42,14 +40,11 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*
 
 [ \t]+ current_column += yyleng;
 \n current_column = 1;
-
 "--"            { fout << current_column << " SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
 "<>--"          { fout << current_column << " SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
 "--<>"          { fout << current_column << " SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
 ".."            { fout << current_column << " SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
 [{}()\[\]*@:,]   { fout << current_column << " SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
-
-
 {Underline} fout << current_column << " Underline\n"; current_column += yyleng;
 {Number} fout << current_column << " Number " << yytext << "\n"; current_column += yyleng;
 {GenericName} {
@@ -91,22 +86,17 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*
 //#include "Token.h"
 int main(int argc, char ** argv){
     yyFlexLexer lexer;
-    
-    fout.open("output/output.txt");
-
     lexer.switch_streams(&fin);  // altera entrada para arquivo
+    
     if(argc > 1 && argv != nullptr){
-        fin.open(argv[1]); //Abre arquivo a ser analisado
+        string filename(argv[1]);
+        fin.open(filename); //Abre arquivo a ser analisado
+        fout.open("output/" + filename.substr(9, filename.length()- 9).replace(filename.length()-15 ,6 , "SymbolTable.txt"));
         lexer.yylex();
-    } else {
-        cout << "Erro ao abrir arquivo";
-    }
-
-    if(fin.is_open())
+        
         fin.close();
-
-    if(fout.is_open())
         fout.close();
-    cout << "\n";
-    return 0;
+    } else {
+        cout << "Erro ao abrir arquivo.";
+    }
 }
