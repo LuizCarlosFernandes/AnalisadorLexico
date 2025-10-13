@@ -3,11 +3,14 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
+#include <filesystem>
 
 //#include "Token.h"
 using namespace std;
 ifstream fin;
 ofstream fout;
+
+namespace fs = std::filesystem;
 
 int current_column = 1;
 
@@ -54,6 +57,7 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*
     // 1. É uma palavra-chave/reservada/estereótipo? (Mais específico)
     if (it != mapIdentifier.end()) {
         fout << current_column << " Keyword (" << it->second << ")\n";
+        cout << "a";
     }
     // 2. É um Package? (Verifica o sufixo)
     else if (lexeme.length() > 3 && lexeme.substr(lexeme.length() - 3) == "Pkg") {
@@ -88,6 +92,17 @@ int main(int argc, char ** argv){
     yyFlexLexer lexer;
     lexer.switch_streams(&fin);  // altera entrada para arquivo
     
+    fs::path dir = "output";
+    try{
+        if(!fs::exists(dir)){
+            fs::create_directory(dir);
+        }
+    }catch (const fs::filesystem_error& e) {
+        cerr << "Erro ao criar diretório: " << e.what() << endl;
+        return 1;
+        
+    }
+
     if(argc > 1 && argv != nullptr){
         string filename(argv[1]);
         fin.open(filename); //Abre arquivo a ser analisado
