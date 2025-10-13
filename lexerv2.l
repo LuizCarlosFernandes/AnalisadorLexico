@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <filesystem>
 
-//#include "Token.h"
 using namespace std;
 ifstream fin;
 ofstream fout;
@@ -57,7 +56,6 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*
     // 1. É uma palavra-chave/reservada/estereótipo? (Mais específico)
     if (it != mapIdentifier.end()) {
         fout << current_column << " Keyword (" << it->second << ")\n";
-        cout << "a";
     }
     // 2. É um Package? (Verifica o sufixo)
     else if (lexeme.length() > 3 && lexeme.substr(lexeme.length() - 3) == "Pkg") {
@@ -87,7 +85,6 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*
 }
 
 %%
-//#include "Token.h"
 int main(int argc, char ** argv){
     yyFlexLexer lexer;
     lexer.switch_streams(&fin);  // altera entrada para arquivo
