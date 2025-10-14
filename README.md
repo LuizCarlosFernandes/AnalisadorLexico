@@ -32,15 +32,15 @@ make
 Para rodar o analisador sobre um arquivo `.tonto`, use:
 
 ```bash
-./lexer exemplos/car.tonto
+./lexer examples/car.tonto
 ```
 
 ## 🧪 Testes
 
-Para testar com outros arquivos `.tonto`, basta adicioná-los na pasta `exemplos/` e executar:
+Para testar com outros arquivos `.tonto`, basta adicioná-los na pasta `examples/` e executar:
 
 ```bash
-./lexer exemplos/nome_arquivo.tonto
+./lexer examples/nome_arquivo.tonto
 ```
 
 
