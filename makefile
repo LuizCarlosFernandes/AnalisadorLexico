@@ -1,7 +1,7 @@
 # Compiladores
 CC=g++
 LEX=flex++
-ARQUIVO=lexerv2.l
+ARQUIVO=lexer.l
 
 # Dependências
 all: lexer
