@@ -33,7 +33,7 @@ unordered_map<string, string> mapIdentifier = {{"relator", "relator"}, {"event",
 {"inherence", "inherence"}, {"value", "value"}, {"formal", "formal"}, {"constitution", "constitution"}, {"import", "import"} ,{"genset", "genset"},
 {"functional-complexes", "functional-complexes"},{"disjoint", "disjoint"}, {"complete", "complete"}, {"general", "general"}, {"specifics", "specifics"}, {"where", "where"},
 {"package", "package"}, {"number", "number"}, {"string", "string"}, {"boolean", "boolean"}, {"date", "date"}, {"time", "time"},
-{"datetime", "datetime"}};
+{"datetime", "datetime"}, {"intrinsic-modes", "intrinsic-modes"}};
 unordered_map<string, string> mapMetaAtributes = {{"ordered", "ordered"}, {"const", "const"}, {"derived", "derived"}, 
 {"subsets", "subsets"}, {"redefines", "redefines"}};
 
@@ -44,18 +44,18 @@ unordered_map<string, string> mapMetaAtributes = {{"ordered", "ordered"}, {"cons
 Underline [_]
 Number [0-9]+
 Letters [a-zA-Z]
-SpecialSymbols [{}()\[\]|\.\.|<>--|--<>|\\*|@|:]
-GenericName {Letters}({Letters}|{Number}|{Underline})*
+SpecialSymbols [{}()\[\]*@:,]
+Association ("<>--"|"--"|"--<>"|".."|"<o>--")
+Cardinality (\[{Number}(".."({Number}|\*))?\])
+GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Underline})+)*
 
 %%
 
 [ \t]+ current_column += yyleng;
 \n current_column = 1;
-"--"            { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
-"<>--"          { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
-"--<>"          { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
-".."            { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
-[{}()\[\]*@:,]   { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
+{Cardinality} { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Cardinality " << yytext << "\n"; current_column += yyleng; }
+{SpecialSymbols}   { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
+{Association} { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Association " << yytext << "\n"; current_column += yyleng; }
 {Underline} TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Underline\n"; current_column += yyleng;
 {Number} TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Number " << yytext << "\n"; current_column += yyleng;
 {GenericName} {
