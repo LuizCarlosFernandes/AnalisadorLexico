@@ -4,15 +4,14 @@
 #include <fstream>
 #include <unordered_map>
 #include <filesystem>
+#include "src/FileWriter.h"
 
 using namespace std;
 ifstream fin;
-ofstream TokensOutput; 
 ofstream CountersOutput;
-
+FileWriter * writer = nullptr;
 
 namespace fs = std::filesystem;
-
 
 int classes_count = 0;
 int relations_count = 0;
@@ -32,8 +31,11 @@ unordered_map<string, string> mapIdentifier = {{"relator", "relator"}, {"event",
 {"bringsAbout", "bringsAbout"}, {"triggers", "triggers"}, {"composition", "composition"}, {"aggregation", "aggregation"},
 {"inherence", "inherence"}, {"value", "value"}, {"formal", "formal"}, {"constitution", "constitution"}, {"import", "import"} ,{"genset", "genset"},
 {"functional-complexes", "functional-complexes"},{"disjoint", "disjoint"}, {"complete", "complete"}, {"general", "general"}, {"specifics", "specifics"}, {"where", "where"},
-{"package", "package"}, {"number", "number"}, {"string", "string"}, {"boolean", "boolean"}, {"date", "date"}, {"time", "time"},
-{"datetime", "datetime"}, {"intrinsic-modes", "intrinsic-modes"}};
+{"package", "package"}, {"intrinsic-modes", "intrinsic-modes"}};
+
+unordered_map<string, string> mapDatatypes = {{"number", "number"}, {"string", "string"}, {"boolean", "boolean"}, {"date", "date"}, {"time", "time"},
+{"datetime", "datetime"}};
+
 unordered_map<string, string> mapMetaAtributes = {{"ordered", "ordered"}, {"const", "const"}, {"derived", "derived"}, 
 {"subsets", "subsets"}, {"redefines", "redefines"}};
 
@@ -53,52 +55,48 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
 
 [ \t]+ current_column += yyleng;
 \n current_column = 1;
-{Cardinality} { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Cardinality " << yytext << "\n"; current_column += yyleng; }
-{SpecialSymbols}   { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", SpecialSymbol " << yytext << "\n"; current_column += yyleng; }
-{Association} { TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Association " << yytext << "\n"; current_column += yyleng; }
-{Underline} TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Underline\n"; current_column += yyleng;
-{Number} TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Number " << yytext << "\n"; current_column += yyleng;
+{Cardinality} { writer->writeToken(yylineno, current_column, "Cardinality", yytext); current_column += yyleng; }
+{SpecialSymbols}   { writer->writeToken(yylineno, current_column, "SpecialSymbol", yytext); current_column += yyleng; }
+{Association} { writer->writeToken(yylineno, current_column, "Association", yytext);; current_column += yyleng; }
+{Underline} writer->writeToken(yylineno, current_column, "Underline", yytext); current_column += yyleng;
+{Number} writer->writeToken(yylineno, current_column, "Number", yytext); current_column += yyleng;
 {GenericName} {
     string lexeme(yytext);
     auto it = mapIdentifier.find(lexeme);
+    auto datatypeIt = mapDatatypes.find(lexeme);
     auto metaIt = mapMetaAtributes.find(lexeme);
     
-    if(metaIt != mapMetaAtributes.end()) {//Testa se é um meta-atributo e aumenta o contador
-        TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", MetaAtribute (" << metaIt->second << ")\n";
+    if(datatypeIt != mapDatatypes.end()){
+        writer->writeToken(yylineno, current_column, "Datatype", yytext);
+    }
+    else if(metaIt != mapMetaAtributes.end()) {
+        writer->writeToken(yylineno, current_column, "Meta-Atribute", yytext);
         metaAtributes_count++;
     }
-    // 1. É uma palavra-chave/reservada/estereótipo? (Mais específico)
     else if (it != mapIdentifier.end()) {
-        TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Keyword (" << it->second << ")\n";
+        writer->writeToken(yylineno, current_column, "Keyword", yytext);
         keywords_count++;
-        
     }
-    // 2. É um Package? (Verifica o sufixo)
     else if (lexeme.length() > 3 && lexeme.substr(lexeme.length() - 3) == "Pkg") {
-        TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", Package (" << lexeme << ")\n";
+        writer->writeToken(yylineno, current_column, "Package", yytext);
     }
-    // 3. É um NewType? (Verifica o sufixo)
     else if (lexeme.length() > 8 && lexeme.substr(lexeme.length() - 8) == "DataType") {
-        TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", NewType (" << lexeme << ")\n";
+        writer->writeToken(yylineno, current_column, "NewDatatype", yytext);
     }
-    // 4. É uma InstanceName? (Verifica se termina com número, conforme a descrição do trabalho)
     else if (!lexeme.empty() && isdigit(lexeme.back())) {
-        TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", InstanceName (" << lexeme << ")\n";
+        writer->writeToken(yylineno, current_column, "Instance", yytext);
         instances_count++;
     }
-    // 5. É um ClassName? (Regra geral de capitalização)
     else if (!lexeme.empty() && isupper(lexeme[0])) {
-        TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", ClassName (" << lexeme << ")\n";
+        writer->writeToken(yylineno, current_column, "Classname", yytext);
         classes_count++;
     }
-    // 6. É um RelationName? (Regra geral de capitalização)
     else if (!lexeme.empty() && islower(lexeme[0])) {
-        TokensOutput << "Column: " << current_column << ", Line: " << yylineno << ", RelationName (" << lexeme << ")\n";
+        writer->writeToken(yylineno, current_column, "Relation", yytext);
         relations_count++;
     }
-    // 7. Se não for nada disso, é um erro.
     else {
-        TokensOutput << "Erro na linha " << yylineno << ": Identificador inválido '" << lexeme << "'\n";
+        writer->writeToken(yylineno, current_column, "Unknown", yytext);
     }
     current_column += yyleng;
 }
@@ -109,22 +107,23 @@ int main(int argc, char ** argv){
     lexer.switch_streams(&fin);  // altera entrada para arquivo
     
     fs::path dir = "output";
-    try{
+    try {
         if(!fs::exists(dir)){
             fs::create_directory(dir);
         }
-    }catch (const fs::filesystem_error& e) {
+    } catch (const fs::filesystem_error& e) {
         cerr << "Erro ao criar diretório: " << e.what() << endl;
         return 1;
-        
     }
 
     if(argc > 1 && argv != nullptr){
         string filename(argv[1]);
-        fin.open(filename); //Abre arquivo a ser analisado
-        TokensOutput.open("output/" + filename.substr(9, filename.length()- 9).replace(filename.length()-15 ,6 , "TokensList.txt"));
+        fin.open(filename);
+
+        writer = new FileWriter("output/" + filename.substr(9, filename.length() - 9).replace(filename.length() - 15, 6, "TokensList.txt"));
         CountersOutput.open("output/" + filename.substr(9, filename.length()- 9).replace(filename.length()-15 ,6 , "SynthesisTable.txt"));
         lexer.yylex();
+
         //Escrita de contadores.
         CountersOutput << "Classes: " << classes_count << "\n";
         CountersOutput << "Relations: " << relations_count << "\n";
@@ -133,9 +132,11 @@ int main(int argc, char ** argv){
         CountersOutput << "MetaAtributes: " << metaAtributes_count << "\n";
         
         fin.close();
-        TokensOutput.close();
+        writer->~FileWriter();
+        delete writer;
         CountersOutput.close();
     } else {
         cout << "Erro ao abrir arquivo.";
+        return 1;
     }
 }
