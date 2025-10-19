@@ -20,9 +20,7 @@ int relations_count = 0;
 int metaAtributes_count = 0;
 
 unordered_set<string> classes_count;
-unordered_set<string> relations_count;
 unordered_set<string> instances_count;
-unordered_set<string> metaAtributes_count;
 
 
 unordered_map<string, string> mapIdentifier = {{"relator", "relator"}, {"event", "event"}, {"situation", "situation"}, {"process", "process"},
@@ -98,7 +96,7 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
     }
     else if (!lexeme.empty() && islower(lexeme[0])) {
         writer->writeToken(yylineno, current_column, "Relation", yytext);
-        relations_count.insert++;
+        relations_count++;
     }
     else {
         writer->writeToken(yylineno, current_column, "Unknown", yytext);
