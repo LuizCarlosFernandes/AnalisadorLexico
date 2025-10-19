@@ -15,12 +15,15 @@ FileWriter * writer = nullptr;
 namespace fs = std::filesystem;
 
 int current_column = 1;
+int keywords_count = 0;
+int relations_count = 0;
+int metaAtributes_count = 0;
 
 unordered_set<string> classes_count;
 unordered_set<string> relations_count;
-unordered_set<string> keywords_count;
 unordered_set<string> instances_count;
 unordered_set<string> metaAtributes_count;
+
 
 unordered_map<string, string> mapIdentifier = {{"relator", "relator"}, {"event", "event"}, {"situation", "situation"}, {"process", "process"},
 {"category", "category"}, {"mixin", "mixin"}, {"phaseMixin", "phaseMixin"}, {"roleMixin", "roleMixin"}, {"historialRoleMixin", "historialRoleMixin"},
@@ -73,11 +76,11 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
     }
     else if(metaIt != mapMetaAtributes.end()) {
         writer->writeToken(yylineno, current_column, "Meta-Atribute", yytext);
-        metaAtributes_count.insert(lexeme);
+        metaAtributes_count++;
     }
     else if (it != mapIdentifier.end()) {
         writer->writeToken(yylineno, current_column, "Keyword", yytext);
-        keywords_count.insert(lexeme);
+        keywords_count++;
     }
     else if (lexeme.length() > 3 && lexeme.substr(lexeme.length() - 3) == "Pkg") {
         writer->writeToken(yylineno, current_column, "Package", yytext);
@@ -95,7 +98,7 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
     }
     else if (!lexeme.empty() && islower(lexeme[0])) {
         writer->writeToken(yylineno, current_column, "Relation", yytext);
-        relations_count.insert(lexeme);
+        relations_count.insert++;
     }
     else {
         writer->writeToken(yylineno, current_column, "Unknown", yytext);
@@ -128,10 +131,10 @@ int main(int argc, char ** argv){
 
         //Escrita de contadores.
         CountersOutput << "Classes: " << classes_count.size() << "\n";
-        CountersOutput << "Relations: " << relations_count.size() << "\n";
-        CountersOutput << "Keywords: " << keywords_count.size() << "\n";
+        CountersOutput << "Relations: " << relations_count << "\n";
+        CountersOutput << "Keywords: " << keywords_count << "\n";
         CountersOutput << "Instances: " << instances_count.size() << "\n";
-        CountersOutput << "MetaAtributes: " << metaAtributes_count.size() << "\n";
+        CountersOutput << "MetaAtributes: " << metaAtributes_count << "\n";
         
         fin.close();
         writer->~FileWriter();
