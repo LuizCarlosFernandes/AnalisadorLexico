@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
+#include <unordered_set>
 #include <filesystem>
 #include "src/FileWriter.h"
 
@@ -13,12 +14,13 @@ FileWriter * writer = nullptr;
 
 namespace fs = std::filesystem;
 
-int classes_count = 0;
-int relations_count = 0;
-int keywords_count = 0;
-int instances_count = 0;
-int metaAtributes_count = 0;
 int current_column = 1;
+
+unordered_set<string> classes_count;
+unordered_set<string> relations_count;
+unordered_set<string> keywords_count;
+unordered_set<string> instances_count;
+unordered_set<string> metaAtributes_count;
 
 unordered_map<string, string> mapIdentifier = {{"relator", "relator"}, {"event", "event"}, {"situation", "situation"}, {"process", "process"},
 {"category", "category"}, {"mixin", "mixin"}, {"phaseMixin", "phaseMixin"}, {"roleMixin", "roleMixin"}, {"historialRoleMixin", "historialRoleMixin"},
@@ -71,11 +73,11 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
     }
     else if(metaIt != mapMetaAtributes.end()) {
         writer->writeToken(yylineno, current_column, "Meta-Atribute", yytext);
-        metaAtributes_count++;
+        metaAtributes_count.insert(lexeme);
     }
     else if (it != mapIdentifier.end()) {
         writer->writeToken(yylineno, current_column, "Keyword", yytext);
-        keywords_count++;
+        keywords_count.insert(lexeme);
     }
     else if (lexeme.length() > 3 && lexeme.substr(lexeme.length() - 3) == "Pkg") {
         writer->writeToken(yylineno, current_column, "Package", yytext);
@@ -85,15 +87,15 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
     }
     else if (!lexeme.empty() && isdigit(lexeme.back())) {
         writer->writeToken(yylineno, current_column, "Instance", yytext);
-        instances_count++;
+        instances_count.insert(lexeme);
     }
     else if (!lexeme.empty() && isupper(lexeme[0])) {
         writer->writeToken(yylineno, current_column, "Classname", yytext);
-        classes_count++;
+        classes_count.insert(lexeme);
     }
     else if (!lexeme.empty() && islower(lexeme[0])) {
         writer->writeToken(yylineno, current_column, "Relation", yytext);
-        relations_count++;
+        relations_count.insert(lexeme);
     }
     else {
         writer->writeToken(yylineno, current_column, "Unknown", yytext);
@@ -125,11 +127,11 @@ int main(int argc, char ** argv){
         lexer.yylex();
 
         //Escrita de contadores.
-        CountersOutput << "Classes: " << classes_count << "\n";
-        CountersOutput << "Relations: " << relations_count << "\n";
-        CountersOutput << "Keywords: " << keywords_count << "\n";
-        CountersOutput << "Instances: " << instances_count << "\n";
-        CountersOutput << "MetaAtributes: " << metaAtributes_count << "\n";
+        CountersOutput << "Classes: " << classes_count.size() << "\n";
+        CountersOutput << "Relations: " << relations_count.size() << "\n";
+        CountersOutput << "Keywords: " << keywords_count.size() << "\n";
+        CountersOutput << "Instances: " << instances_count.size() << "\n";
+        CountersOutput << "MetaAtributes: " << metaAtributes_count.size() << "\n";
         
         fin.close();
         writer->~FileWriter();
