@@ -6,11 +6,13 @@
 #include <unordered_set>
 #include <filesystem>
 #include "src/FileWriter.h"
+#include "src/PatternsCheck.h"
 
 using namespace std;
 ifstream fin;
 ofstream CountersOutput;
 FileWriter * writer = nullptr;
+bool prettyPrint = true;
 
 namespace fs = std::filesystem;
 
@@ -58,11 +60,11 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
 
 [ \t]+ current_column += yyleng;
 \n current_column = 1;
-{Cardinality} { writer->writeToken(yylineno, current_column, "Cardinality", yytext); current_column += yyleng; }
-{SpecialSymbols}   { writer->writeToken(yylineno, current_column, "SpecialSymbol", yytext); current_column += yyleng; }
-{Association} { writer->writeToken(yylineno, current_column, "Association", yytext);; current_column += yyleng; }
-{Underline} writer->writeToken(yylineno, current_column, "Underline", yytext); current_column += yyleng;
-{Number} writer->writeToken(yylineno, current_column, "Number", yytext); current_column += yyleng;
+{Cardinality} { writer->writeToken(yylineno, current_column, "Cardinality", yytext, prettyPrint); current_column += yyleng; }
+{SpecialSymbols}   { writer->writeToken(yylineno, current_column, "SpecialSymbol", yytext, prettyPrint); current_column += yyleng; }
+{Association} { writer->writeToken(yylineno, current_column, "Association", yytext, prettyPrint);; current_column += yyleng; }
+{Underline} writer->writeToken(yylineno, current_column, "Underline", yytext, prettyPrint); current_column += yyleng;
+{Number} writer->writeToken(yylineno, current_column, "Number", yytext, prettyPrint); current_column += yyleng;
 {GenericName} {
     string lexeme(yytext);
     auto it = mapIdentifier.find(lexeme);
@@ -70,36 +72,36 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
     auto metaIt = mapMetaAtributes.find(lexeme);
     
     if(datatypeIt != mapDatatypes.end()){
-        writer->writeToken(yylineno, current_column, "Datatype", yytext);
+        writer->writeToken(yylineno, current_column, "Datatype", yytext, prettyPrint);
     }
     else if(metaIt != mapMetaAtributes.end()) {
-        writer->writeToken(yylineno, current_column, "Meta-Atribute", yytext);
+        writer->writeToken(yylineno, current_column, "Meta-Atribute", yytext, prettyPrint);
         metaAtributes_count++;
     }
     else if (it != mapIdentifier.end()) {
-        writer->writeToken(yylineno, current_column, "Keyword", yytext);
+        writer->writeToken(yylineno, current_column, "Keyword", yytext, prettyPrint);
         keywords_count++;
     }
-    else if (lexeme.length() > 3 && lexeme.substr(lexeme.length() - 3) == "Pkg") {
-        writer->writeToken(yylineno, current_column, "Package", yytext);
+    else if (isPackage(lexeme)) {
+        writer->writeToken(yylineno, current_column, "Package", yytext, prettyPrint);
     }
-    else if (lexeme.length() > 8 && lexeme.substr(lexeme.length() - 8) == "DataType") {
-        writer->writeToken(yylineno, current_column, "NewDatatype", yytext);
+    else if (isDataType(lexeme)) {
+        writer->writeToken(yylineno, current_column, "NewDatatype", yytext, prettyPrint);
     }
-    else if (!lexeme.empty() && isdigit(lexeme.back())) {
-        writer->writeToken(yylineno, current_column, "Instance", yytext);
+    else if (isInstance(lexeme)) {
+        writer->writeToken(yylineno, current_column, "Instance", yytext, prettyPrint);
         instances_count.insert(lexeme);
     }
-    else if (!lexeme.empty() && isupper(lexeme[0])) {
-        writer->writeToken(yylineno, current_column, "Classname", yytext);
+    else if (isClassname(lexeme)) {
+        writer->writeToken(yylineno, current_column, "Classname", yytext, prettyPrint);
         classes_count.insert(lexeme);
     }
-    else if (!lexeme.empty() && islower(lexeme[0])) {
-        writer->writeToken(yylineno, current_column, "Relation", yytext);
+    else if (isRelation(lexeme)) {
+        writer->writeToken(yylineno, current_column, "Relation", yytext, prettyPrint);
         relations_count++;
     }
     else {
-        writer->writeToken(yylineno, current_column, "Unknown", yytext);
+        writer->writeToken(yylineno, current_column, "Unknown", yytext, prettyPrint);
     }
     current_column += yyleng;
 }
@@ -123,7 +125,11 @@ int main(int argc, char ** argv){
         string filename(argv[1]);
         fin.open(filename);
 
-        writer = new FileWriter("output/" + filename.substr(9, filename.length() - 9).replace(filename.length() - 15, 6, "TokensList.txt"));
+        // Verificação para formatar saida como a entrada do sintatico
+        if(argc > 2)
+            prettyPrint = false;
+        
+        writer = new FileWriter("output/" + filename.substr(9, filename.length() - 9).replace(filename.length() - 15, 6, "TokensList.txt"), prettyPrint);
         CountersOutput.open("output/" + filename.substr(9, filename.length()- 9).replace(filename.length()-15 ,6 , "SynthesisTable.txt"));
         lexer.yylex();
 

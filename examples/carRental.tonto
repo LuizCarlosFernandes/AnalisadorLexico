@@ -1,4 +1,4 @@
-package CarRental 
+package CarRentalPkg 
 
 kind Person
 

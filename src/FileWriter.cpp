@@ -1,10 +1,12 @@
 #include "FileWriter.h"
 
-FileWriter::FileWriter(const std::string& path){
+FileWriter::FileWriter(const std::string& path, bool prettyPrint){
     out.open(path);
     if (!out.is_open())
         throw std::runtime_error("Erro ao abrir arquivo de saída: " + path);
-    writeHeader();
+
+    if(prettyPrint)
+        writeHeader();
 }
 
 FileWriter::~FileWriter(){
@@ -19,12 +21,19 @@ void FileWriter::writeHeader(){
         << std::setw(13) << "Type"   << " | "
         << "Lexeme" << "\n";
     out << std::string(60, '-') << "\n";
-    }
+}
 
-void FileWriter::writeToken(int line, int column, const std::string& type, const std::string& lexeme) {
-    out << std::left
-        << std::setw(6)  << line   << " | "
-        << std::setw(7)  << column << " | "
-        << std::setw(13) << type   << " | "
-        << lexeme << "\n";
+void FileWriter::writeToken(int line, int column, const std::string& type, const std::string& lexeme, bool prettyPrint) {
+    if(prettyPrint){
+        out << std::left
+            << std::setw(6)  << line   << " | "
+            << std::setw(7)  << column << " | "
+            << std::setw(13) << type   << " | "
+            << lexeme << "\n";
+    } else {
+        out << line << " " 
+            << column << " " 
+            << type << " " 
+            << lexeme << "\n";
     }
+}

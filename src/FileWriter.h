@@ -10,9 +10,9 @@ class FileWriter {
         std::ofstream out;
 
     public:
-        FileWriter(const std::string& path);
+        FileWriter(const std::string& path, bool prettyPrint = true);
         ~FileWriter();
         void writeHeader();
-        void writeToken(int line, int column, const std::string& type, const std::string& lexeme);
+        void writeToken(int line, int column, const std::string& type, const std::string& lexeme, bool prettyPrint = true);
 };
 #endif
