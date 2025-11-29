@@ -48,6 +48,7 @@ unordered_map<string, string> mapMetaAtributes = {{"ordered", "ordered"}, {"cons
 
 %option yylineno
 
+CommentLine "//".*
 Underline [_]
 Number [0-9]+
 Letters [a-zA-Z]
@@ -60,6 +61,7 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
 
 [ \t]+ current_column += yyleng;
 \n current_column = 1;
+{CommentLine}
 {Cardinality} { writer->writeToken(yylineno, current_column, "Cardinality", yytext, prettyPrint); current_column += yyleng; }
 {SpecialSymbols}   { writer->writeToken(yylineno, current_column, "SpecialSymbol", yytext, prettyPrint); current_column += yyleng; }
 {Association} { writer->writeToken(yylineno, current_column, "Association", yytext, prettyPrint);; current_column += yyleng; }
@@ -108,44 +110,77 @@ GenericName {Letters}({Letters}|{Number}|{Underline})*(\-({Letters}|{Number}|{Un
 
 %%
 int main(int argc, char ** argv){
-    yyFlexLexer lexer;
-    lexer.switch_streams(&fin);  // altera entrada para arquivo
-    
-    fs::path dir = "output";
+    bool sinthesisTable = true;
+
+    if(argc < 2){
+        cerr << "Uso: ./lexer <caminho_da_pasta> [prettyOff]" << endl;
+        return 1;
+    }
+
+    fs::path inputDir(argv[1]);
+
+    // prettyPrint = false se houver 3º argumento
+    if(argc > 2)
+        prettyPrint = false;
+
+    // Checa se é diretório
+    if(!fs::exists(inputDir) || !fs::is_directory(inputDir)){
+        cerr << "Erro: caminho informado não é um diretório." << endl;
+        return 1;
+    }
+
+    // Cria pasta output
+    fs::path outDir = "output";
     try {
-        if(!fs::exists(dir)){
-            fs::create_directory(dir);
+        if(!fs::exists(outDir)){
+            fs::create_directory(outDir);
         }
     } catch (const fs::filesystem_error& e) {
         cerr << "Erro ao criar diretório: " << e.what() << endl;
         return 1;
     }
 
-    if(argc > 1 && argv != nullptr){
-        string filename(argv[1]);
-        fin.open(filename);
+    // Itera arquivos da pasta
+    for(const auto & entry : fs::directory_iterator(inputDir)){
+        if(entry.is_regular_file()){
+            
+            string filename = entry.path().string();
+            fin.open(filename);
 
-        // Verificação para formatar saida como a entrada do sintatico
-        if(argc > 2)
-            prettyPrint = false;
-        
-        writer = new FileWriter("output/" + filename.substr(9, filename.length() - 9).replace(filename.length() - 15, 6, "TokensList.txt"), prettyPrint);
-        CountersOutput.open("output/" + filename.substr(9, filename.length()- 9).replace(filename.length()-15 ,6 , "SynthesisTable.txt"));
-        lexer.yylex();
+            if(!fin.is_open()){
+                cerr << "Erro ao abrir arquivo: " << filename << endl;
+                continue;
+            }
 
-        //Escrita de contadores.
-        CountersOutput << "Classes: " << classes_count.size() << "\n";
-        CountersOutput << "Relations: " << relations_count << "\n";
-        CountersOutput << "Keywords: " << keywords_count << "\n";
-        CountersOutput << "Instances: " << instances_count.size() << "\n";
-        CountersOutput << "MetaAtributes: " << metaAtributes_count << "\n";
         
-        fin.close();
-        writer->~FileWriter();
-        delete writer;
-        CountersOutput.close();
-    } else {
-        cout << "Erro ao abrir arquivo.";
-        return 1;
+
+            // Nome de saída (substitui extensão por TokensList.txt)
+            string outName = entry.path().filename().string();
+            size_t dot = outName.find_last_of(".");
+            if(dot != string::npos)
+                outName = outName.substr(0, dot);
+
+            string outFile = "output/" + outName + "_TokensList.txt";
+            writer = new FileWriter(outFile, prettyPrint);
+
+            yyFlexLexer lexer;
+            current_column = 1;
+            lexer.switch_streams(&fin);
+            lexer.yylex();
+
+            fin.close();
+
+            delete writer;
+            writer = nullptr;
+
+            // Zera contadores para o próximo arquivo
+            keywords_count = 0;
+            relations_count = 0;
+            metaAtributes_count = 0;
+            classes_count.clear();
+            instances_count.clear();
+        }
     }
+
+    return 0;
 }

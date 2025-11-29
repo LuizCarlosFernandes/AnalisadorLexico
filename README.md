@@ -29,18 +29,10 @@ make
 
 ## ▶️ Como Executar
 
-Para rodar o analisador sobre um arquivo `.tonto`, use:
+Para rodar o analisador sobre um diretório, use:
 
 ```bash
-./lexer examples/car.tonto
-```
-
-## 🧪 Testes
-
-Para testar com outros arquivos `.tonto`, basta adicioná-los na pasta `examples/` e executar:
-
-```bash
-./lexer examples/nome_arquivo.tonto
+./lexer caminho_diretorio/
 ```
 
 ## 🪲 Função Extra
@@ -48,5 +40,5 @@ Para testar com outros arquivos `.tonto`, basta adicioná-los na pasta `examples
 Com o objetivo de facilitar o uso do arquivo de saída com entrada para outros programas, podemos passar um argumento a mais na execução para gerar um arquivo de saída sem formatação de tabela:
 
 ```bash
-./lexer examples/nome_arquivo.tonto -c
+./lexer caminho_diretorio/ -c
 ```
